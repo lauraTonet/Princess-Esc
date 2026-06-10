@@ -291,3 +291,391 @@ def tela_boas_vindas(nome):
 
         pygame.display.flip()
 
+# ----------------------------------------------------------------------
+# TELA 3: A PARTIDA  (estilo lateral, com pulo)
+# ----------------------------------------------------------------------
+def jogar(nome):
+    """
+    Loop principal da partida. A princesa corre no lugar e pula obstaculos
+    que vem da direita. Retorna a pontuacao final ao colidir.
+    """
+    # Posicao X fixa; so o Y muda (pulo). Isso atende ao item 13.
+    princesa_x = 150
+    princesa_y = CHAO_Y - ALT_PRINCESA   # apoiada no chao
+    vel_y = 0
+    gravidade = 1
+    forca_pulo = -18
+    no_chao = True
+
+    velocidade_jogo = 7
+    # Cria alguns obstaculos espalhados a partir da direita da tela.
+    obstaculos = [novo_obstaculo(LARGURA + i * 380) for i in range(3)]
+    nuvem = nova_nuvem()
+
+    pausado = False
+    passo = 0
+    inicio = pygame.time.get_ticks()
+    pontuacao = 0
+
+    while True:
+        relogio.tick(FPS)
+        passo += 1
+
+        # ---- EVENTOS ----
+        for evento in pygame.event.get():
+            if evento.type == pygame.QUIT:
+                encerrar()
+            if evento.type == pygame.KEYDOWN:
+                if evento.key == pygame.K_ESCAPE:        # item 20
+                    encerrar()
+                if evento.key == pygame.K_SPACE:         # item 11: pausa
+                    pausado = not pausado
+                if evento.key == pygame.K_UP and no_chao and not pausado:
+                    vel_y = forca_pulo                   # inicia o pulo
+                    no_chao = False
+
+        # ---- ATUALIZACAO (so quando nao esta pausado) ----
+        if not pausado:
+            # Fisica do pulo (movimento somente no eixo Y).
+            vel_y += gravidade
+            princesa_y += vel_y
+            if princesa_y >= CHAO_Y - ALT_PRINCESA:
+                princesa_y = CHAO_Y - ALT_PRINCESA
+                vel_y = 0
+                no_chao = True
+
+            pontuacao = (pygame.time.get_ticks() - inicio) // 100
+
+            princesa_rect = pygame.Rect(princesa_x, princesa_y,
+                                        LARG_PRINCESA, ALT_PRINCESA)
+
+            # Move os obstaculos para a esquerda.
+            for obst in obstaculos:
+                obst["x"] -= velocidade_jogo
+                if obst["x"] + obst["w"] < 0:
+                    # Reaproveita o obstaculo bem a direita, com um espaco.
+                    mais_a_direita = max(o["x"] for o in obstaculos)
+                    obst.update(novo_obstaculo(mais_a_direita + random.randint(320, 520)))
+
+                obst_rect = pygame.Rect(obst["x"], CHAO_Y - obst["h"],
+                                        obst["w"], obst["h"])
+                if princesa_rect.colliderect(obst_rect):
+                    salvar_log(ARQUIVO_LOG, nome, pontuacao)   # item 15
+                    return pontuacao
+
+            # Move a nuvem decorativa (sem colisao, item 14).
+            nuvem["x"] += nuvem["vx"]
+            nuvem["y"] += nuvem["vy"]
+            if nuvem["x"] < 40 or nuvem["x"] > LARGURA - 120:
+                nuvem["vx"] *= -1
+            if nuvem["y"] < 50 or nuvem["y"] > 230:
+                nuvem["vy"] *= -1
+
+        # ---- DESENHO ----
+        desenhar_fundo()
+        desenhar_sol_pulsante(passo)
+
+        # Nuvem decorativa
+        if IMAGEM_DECORATIVO is not None:
+            tela.blit(IMAGEM_DECORATIVO, (nuvem["x"], nuvem["y"]))
+        else:
+            pygame.draw.circle(tela, BRANCO, (nuvem["x"], nuvem["y"]), 22)
+
+        # Obstaculos
+        for obst in obstaculos:
+            obst_rect = pygame.Rect(obst["x"], CHAO_Y - obst["h"],
+                                    obst["w"], obst["h"])
+            if IMAGEM_INIMIGO is not None:
+                imagem = pygame.transform.smoothscale(IMAGEM_INIMIGO,
+                                                      (obst["w"], obst["h"]))
+                tela.blit(imagem, obst_rect)
+            else:
+                pygame.draw.rect(tela, VERDE, obst_rect, border_radius=6)
+                pygame.draw.rect(tela, BRANCO, obst_rect, 2, border_radius=6)
+
+        # Princesa (personagem)
+        if IMAGEM_PERSONAGEM is not None:
+            tela.blit(IMAGEM_PERSONAGEM, (princesa_x, princesa_y))
+        else:
+            pygame.draw.rect(tela, ROSA, (princesa_x, princesa_y,
+                                          LARG_PRINCESA, ALT_PRINCESA), border_radius=8)
+            desenhar_texto("AQUI VAI", FONTE_PEQUENA, BRANCO,
+                           princesa_x + LARG_PRINCESA // 2, princesa_y + 28, centro=True)
+            desenhar_texto("IMAGEM", FONTE_PEQUENA, BRANCO,
+                           princesa_x + LARG_PRINCESA // 2, princesa_y + 46, centro=True)
+
+        # Informacoes na tela
+        desenhar_texto(f"Jogadora: {nome}", FONTE_PEQUENA, CINZA_CLARO, 20, 18)
+        desenhar_texto(f"Pontuacao: {pontuacao}", FONTE_PEQUENA, CINZA_CLARO, 20, 44)
+        # Item 12: mensagem discreta
+        desenhar_texto("Press Space to Pause Game.", FONTE_PEQUENA,
+                       CINZA_CLARO, LARGURA - 250, ALTURA - 30)
+
+        # Item 11: sobreposicao de pausa
+        if pausado:
+            sombra = pygame.Surface((LARGURA, ALTURA), pygame.SRCALPHA)
+            sombra.fill((0, 0, 0, 150))
+            tela.blit(sombra, (0, 0))
+            desenhar_texto("PAUSE", FONTE_GRANDE, BRANCO,
+                           LARGURA // 2, ALTURA // 2, centro=True)
+
+        pygame.display.flip()
+# ----------------------------------------------------------------------
+# TELA 3: A PARTIDA  (estilo lateral, com pulo)
+# ----------------------------------------------------------------------
+def jogar(nome):
+    """
+    Loop principal da partida. A princesa corre no lugar e pula obstaculos
+    que vem da direita. Retorna a pontuacao final ao colidir.
+    """
+    # Posicao X fixa; so o Y muda (pulo). Isso atende ao item 13.
+    princesa_x = 150
+    princesa_y = CHAO_Y - ALT_PRINCESA   # apoiada no chao
+    vel_y = 0
+    gravidade = 1
+    forca_pulo = -18
+    no_chao = True
+
+    velocidade_jogo = 7
+    # Cria alguns obstaculos espalhados a partir da direita da tela.
+    obstaculos = [novo_obstaculo(LARGURA + i * 380) for i in range(3)]
+    nuvem = nova_nuvem()
+
+    pausado = False
+    passo = 0
+    inicio = pygame.time.get_ticks()
+    pontuacao = 0
+
+    while True:
+        relogio.tick(FPS)
+        passo += 1
+
+        # ---- EVENTOS ----
+        for evento in pygame.event.get():
+            if evento.type == pygame.QUIT:
+                encerrar()
+            if evento.type == pygame.KEYDOWN:
+                if evento.key == pygame.K_ESCAPE:        # item 20
+                    encerrar()
+                if evento.key == pygame.K_SPACE:         # item 11: pausa
+                    pausado = not pausado
+                if evento.key == pygame.K_UP and no_chao and not pausado:
+                    vel_y = forca_pulo                   # inicia o pulo
+                    no_chao = False
+
+        # ---- ATUALIZACAO (so quando nao esta pausado) ----
+        if not pausado:
+            # Fisica do pulo (movimento somente no eixo Y).
+            vel_y += gravidade
+            princesa_y += vel_y
+            if princesa_y >= CHAO_Y - ALT_PRINCESA:
+                princesa_y = CHAO_Y - ALT_PRINCESA
+                vel_y = 0
+                no_chao = True
+
+            pontuacao = (pygame.time.get_ticks() - inicio) // 100
+
+            princesa_rect = pygame.Rect(princesa_x, princesa_y,
+                                        LARG_PRINCESA, ALT_PRINCESA)
+
+            # Move os obstaculos para a esquerda.
+            for obst in obstaculos:
+                obst["x"] -= velocidade_jogo
+                if obst["x"] + obst["w"] < 0:
+                    # Reaproveita o obstaculo bem a direita, com um espaco.
+                    mais_a_direita = max(o["x"] for o in obstaculos)
+                    obst.update(novo_obstaculo(mais_a_direita + random.randint(320, 520)))
+
+                obst_rect = pygame.Rect(obst["x"], CHAO_Y - obst["h"],
+                                        obst["w"], obst["h"])
+                if princesa_rect.colliderect(obst_rect):
+                    salvar_log(ARQUIVO_LOG, nome, pontuacao)   # item 15
+                    return pontuacao
+
+            # Move a nuvem decorativa (sem colisao, item 14).
+            nuvem["x"] += nuvem["vx"]
+            nuvem["y"] += nuvem["vy"]
+            if nuvem["x"] < 40 or nuvem["x"] > LARGURA - 120:
+                nuvem["vx"] *= -1
+            if nuvem["y"] < 50 or nuvem["y"] > 230:
+                nuvem["vy"] *= -1
+
+        # ---- DESENHO ----
+        desenhar_fundo()
+        desenhar_sol_pulsante(passo)
+
+        # Nuvem decorativa
+        if IMAGEM_DECORATIVO is not None:
+            tela.blit(IMAGEM_DECORATIVO, (nuvem["x"], nuvem["y"]))
+        else:
+            pygame.draw.circle(tela, BRANCO, (nuvem["x"], nuvem["y"]), 22)
+
+        # Obstaculos
+        for obst in obstaculos:
+            obst_rect = pygame.Rect(obst["x"], CHAO_Y - obst["h"],
+                                    obst["w"], obst["h"])
+            if IMAGEM_INIMIGO is not None:
+                imagem = pygame.transform.smoothscale(IMAGEM_INIMIGO,
+                                                      (obst["w"], obst["h"]))
+                tela.blit(imagem, obst_rect)
+            else:
+                pygame.draw.rect(tela, VERDE, obst_rect, border_radius=6)
+                pygame.draw.rect(tela, BRANCO, obst_rect, 2, border_radius=6)
+
+        # Princesa (personagem)
+        if IMAGEM_PERSONAGEM is not None:
+            tela.blit(IMAGEM_PERSONAGEM, (princesa_x, princesa_y))
+        else:
+            pygame.draw.rect(tela, ROSA, (princesa_x, princesa_y,
+                                          LARG_PRINCESA, ALT_PRINCESA), border_radius=8)
+            desenhar_texto("AQUI VAI", FONTE_PEQUENA, BRANCO,
+                           princesa_x + LARG_PRINCESA // 2, princesa_y + 28, centro=True)
+            desenhar_texto("IMAGEM", FONTE_PEQUENA, BRANCO,
+                           princesa_x + LARG_PRINCESA // 2, princesa_y + 46, centro=True)
+
+        # Informacoes na tela
+        desenhar_texto(f"Jogadora: {nome}", FONTE_PEQUENA, CINZA_CLARO, 20, 18)
+        desenhar_texto(f"Pontuacao: {pontuacao}", FONTE_PEQUENA, CINZA_CLARO, 20, 44)
+        # Item 12: mensagem discreta
+        desenhar_texto("Press Space to Pause Game.", FONTE_PEQUENA,
+                       CINZA_CLARO, LARGURA - 250, ALTURA - 30)
+
+        # Item 11: sobreposicao de pausa
+        if pausado:
+            sombra = pygame.Surface((LARGURA, ALTURA), pygame.SRCALPHA)
+            sombra.fill((0, 0, 0, 150))
+            tela.blit(sombra, (0, 0))
+            desenhar_texto("PAUSE", FONTE_GRANDE, BRANCO,
+                           LARGURA // 2, ALTURA // 2, centro=True)
+
+        pygame.display.flip()
+
+# ----------------------------------------------------------------------
+# TELA 3: A PARTIDA  (estilo lateral, com pulo)
+# ----------------------------------------------------------------------
+def jogar(nome):
+    """
+    Loop principal da partida. A princesa corre no lugar e pula obstaculos
+    que vem da direita. Retorna a pontuacao final ao colidir.
+    """
+    # Posicao X fixa; so o Y muda (pulo). Isso atende ao item 13.
+    princesa_x = 150
+    princesa_y = CHAO_Y - ALT_PRINCESA   # apoiada no chao
+    vel_y = 0
+    gravidade = 1
+    forca_pulo = -18
+    no_chao = True
+
+    velocidade_jogo = 7
+    # Cria alguns obstaculos espalhados a partir da direita da tela.
+    obstaculos = [novo_obstaculo(LARGURA + i * 380) for i in range(3)]
+    nuvem = nova_nuvem()
+
+    pausado = False
+    passo = 0
+    inicio = pygame.time.get_ticks()
+    pontuacao = 0
+
+    while True:
+        relogio.tick(FPS)
+        passo += 1
+
+        # ---- EVENTOS ----
+        for evento in pygame.event.get():
+            if evento.type == pygame.QUIT:
+                encerrar()
+            if evento.type == pygame.KEYDOWN:
+                if evento.key == pygame.K_ESCAPE:        # item 20
+                    encerrar()
+                if evento.key == pygame.K_SPACE:         # item 11: pausa
+                    pausado = not pausado
+                if evento.key == pygame.K_UP and no_chao and not pausado:
+                    vel_y = forca_pulo                   # inicia o pulo
+                    no_chao = False
+
+        # ---- ATUALIZACAO (so quando nao esta pausado) ----
+        if not pausado:
+            # Fisica do pulo (movimento somente no eixo Y).
+            vel_y += gravidade
+            princesa_y += vel_y
+            if princesa_y >= CHAO_Y - ALT_PRINCESA:
+                princesa_y = CHAO_Y - ALT_PRINCESA
+                vel_y = 0
+                no_chao = True
+
+            pontuacao = (pygame.time.get_ticks() - inicio) // 100
+
+            princesa_rect = pygame.Rect(princesa_x, princesa_y,
+                                        LARG_PRINCESA, ALT_PRINCESA)
+
+            # Move os obstaculos para a esquerda.
+            for obst in obstaculos:
+                obst["x"] -= velocidade_jogo
+                if obst["x"] + obst["w"] < 0:
+                    # Reaproveita o obstaculo bem a direita, com um espaco.
+                    mais_a_direita = max(o["x"] for o in obstaculos)
+                    obst.update(novo_obstaculo(mais_a_direita + random.randint(320, 520)))
+
+                obst_rect = pygame.Rect(obst["x"], CHAO_Y - obst["h"],
+                                        obst["w"], obst["h"])
+                if princesa_rect.colliderect(obst_rect):
+                    salvar_log(ARQUIVO_LOG, nome, pontuacao)   # item 15
+                    return pontuacao
+
+            # Move a nuvem decorativa (sem colisao, item 14).
+            nuvem["x"] += nuvem["vx"]
+            nuvem["y"] += nuvem["vy"]
+            if nuvem["x"] < 40 or nuvem["x"] > LARGURA - 120:
+                nuvem["vx"] *= -1
+            if nuvem["y"] < 50 or nuvem["y"] > 230:
+                nuvem["vy"] *= -1
+
+        # ---- DESENHO ----
+        desenhar_fundo()
+        desenhar_sol_pulsante(passo)
+
+        # Nuvem decorativa
+        if IMAGEM_DECORATIVO is not None:
+            tela.blit(IMAGEM_DECORATIVO, (nuvem["x"], nuvem["y"]))
+        else:
+            pygame.draw.circle(tela, BRANCO, (nuvem["x"], nuvem["y"]), 22)
+
+        # Obstaculos
+        for obst in obstaculos:
+            obst_rect = pygame.Rect(obst["x"], CHAO_Y - obst["h"],
+                                    obst["w"], obst["h"])
+            if IMAGEM_INIMIGO is not None:
+                imagem = pygame.transform.smoothscale(IMAGEM_INIMIGO,
+                                                      (obst["w"], obst["h"]))
+                tela.blit(imagem, obst_rect)
+            else:
+                pygame.draw.rect(tela, VERDE, obst_rect, border_radius=6)
+                pygame.draw.rect(tela, BRANCO, obst_rect, 2, border_radius=6)
+
+        # Princesa (personagem)
+        if IMAGEM_PERSONAGEM is not None:
+            tela.blit(IMAGEM_PERSONAGEM, (princesa_x, princesa_y))
+        else:
+            pygame.draw.rect(tela, ROSA, (princesa_x, princesa_y,
+                                          LARG_PRINCESA, ALT_PRINCESA), border_radius=8)
+            desenhar_texto("AQUI VAI", FONTE_PEQUENA, BRANCO,
+                           princesa_x + LARG_PRINCESA // 2, princesa_y + 28, centro=True)
+            desenhar_texto("IMAGEM", FONTE_PEQUENA, BRANCO,
+                           princesa_x + LARG_PRINCESA // 2, princesa_y + 46, centro=True)
+
+        # Informacoes na tela
+        desenhar_texto(f"Jogadora: {nome}", FONTE_PEQUENA, CINZA_CLARO, 20, 18)
+        desenhar_texto(f"Pontuacao: {pontuacao}", FONTE_PEQUENA, CINZA_CLARO, 20, 44)
+        # Item 12: mensagem discreta
+        desenhar_texto("Press Space to Pause Game.", FONTE_PEQUENA,
+                       CINZA_CLARO, LARGURA - 250, ALTURA - 30)
+
+        # Item 11: sobreposicao de pausa
+        if pausado:
+            sombra = pygame.Surface((LARGURA, ALTURA), pygame.SRCALPHA)
+            sombra.fill((0, 0, 0, 150))
+            tela.blit(sombra, (0, 0))
+            desenhar_texto("PAUSE", FONTE_GRANDE, BRANCO,
+                           LARGURA // 2, ALTURA // 2, centro=True)
+
+        pygame.display.flip()

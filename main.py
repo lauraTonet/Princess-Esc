@@ -187,3 +187,51 @@ def nova_nuvem():
         "vx": random.choice([-2, -1, 1, 2]),
         "vy": random.choice([-1, 1]),
     }
+
+# ----------------------------------------------------------------------
+# TELA 1: DIGITAR O NOME
+# ----------------------------------------------------------------------
+def tela_nome():
+    """Jogadora digita o nome e aperta ENTER. ESC fecha o jogo (item 20)."""
+    nome = ""
+    ja_falou = False
+
+    while True:
+        relogio.tick(FPS)
+        desenhar_fundo()
+
+        desenhar_texto(TITULO_JOGO, FONTE_GRANDE, ROSA, LARGURA // 2, 130, centro=True)
+        desenhar_texto("Digite seu nome e pressione ENTER",
+                       FONTE_NORMAL, CINZA_CLARO, LARGURA // 2, 220, centro=True)
+
+        caixa = pygame.Rect(300, 280, 400, 56)
+        pygame.draw.rect(tela, BRANCO, caixa, border_radius=8)
+        pygame.draw.rect(tela, ROSA, caixa, 3, border_radius=8)
+        desenhar_texto(nome if nome else "...", FONTE_NORMAL, PRETO,
+                       caixa.x + 16, caixa.y + 15)
+
+        desenhar_texto("ESC fecha o jogo a qualquer momento.",
+                       FONTE_PEQUENA, CINZA_CLARO, LARGURA // 2, 380, centro=True)
+
+        if not ja_falou:
+            if SOM_INICIO is not None:
+                SOM_INICIO.play()
+            falar(f"Bem vinda ao jogo {TITULO_JOGO}")
+            ja_falou = True
+
+        for evento in pygame.event.get():
+            if evento.type == pygame.QUIT:        # X no canto da janela
+                encerrar()
+            if evento.type == pygame.KEYDOWN:
+                if evento.key == pygame.K_ESCAPE:  # item 20
+                    encerrar()
+                elif evento.key == pygame.K_RETURN:
+                    if nome.strip():
+                        return nome.strip()
+                elif evento.key == pygame.K_BACKSPACE:
+                    nome = nome[:-1]
+                else:
+                    if len(nome) < 18 and evento.unicode.isprintable():
+                        nome += evento.unicode
+
+        pygame.display.flip()

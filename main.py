@@ -235,3 +235,59 @@ def tela_nome():
                         nome += evento.unicode
 
         pygame.display.flip()
+
+# ----------------------------------------------------------------------
+# TELA 2: BOAS-VINDAS  (item 9)
+# ----------------------------------------------------------------------
+def tela_boas_vindas(nome):
+    """
+    Mostra nome da jogadora, explicacao da mecanica, o recorde atual e UM
+    unico botao para iniciar. Para sair, usa-se o X da janela ou o ESC.
+    """
+    melhor = obter_melhor_jogador(ARQUIVO_LOG)
+    botao = pygame.Rect(375, 540, 250, 70)
+    ja_falou = False
+
+    instrucoes = [
+        "Como jogar:",
+        f"A {NOME_PERSONAGEM} corre sozinha pelo cenario.",
+        "Pressione a SETA PARA CIMA para pular os obstaculos.",
+        "Voce so se move no eixo Y (pulando).",
+        f"Sobreviva o maximo possivel e resgate o {NOME_RESGATADO}!",
+        "Espaco pausa e despausa. ESC fecha o jogo.",
+    ]
+
+    while True:
+        relogio.tick(FPS)
+        desenhar_fundo()
+
+        desenhar_texto(f"Ola, {nome}!", FONTE_GRANDE, ROSA, LARGURA // 2, 90, centro=True)
+
+        y = 180
+        for i, linha in enumerate(instrucoes):
+            fonte = FONTE_NORMAL if i == 0 else FONTE_PEQUENA
+            desenhar_texto(linha, fonte, CINZA_CLARO, 130, y)
+            y += 38
+
+        desenhar_texto(formatar_melhor(melhor), FONTE_NORMAL, VERMELHO,
+                       LARGURA // 2, 455, centro=True)
+
+        pygame.draw.rect(tela, ROSA, botao, border_radius=12)
+        pygame.draw.rect(tela, BRANCO, botao, 3, border_radius=12)
+        desenhar_texto("INICIAR", FONTE_MEDIA, BRANCO,
+                       botao.centerx, botao.centery, centro=True)
+
+        if not ja_falou:
+            falar(f"Ola {nome}. Clique em iniciar para comecar.")
+            ja_falou = True
+
+        for evento in pygame.event.get():
+            if evento.type == pygame.QUIT:
+                encerrar()
+            if evento.type == pygame.KEYDOWN and evento.key == pygame.K_ESCAPE:
+                encerrar()
+            if evento.type == pygame.MOUSEBUTTONDOWN and botao.collidepoint(evento.pos):
+                return
+
+        pygame.display.flip()
+

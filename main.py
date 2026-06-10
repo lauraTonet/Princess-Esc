@@ -48,3 +48,22 @@ AMARELO = (255, 205, 60)
 CINZA = (90, 95, 110)
 CINZA_CLARO = (70, 75, 90)
 
+# ----------------------------------------------------------------------
+# INICIALIZACAO DO PYGAME
+# ----------------------------------------------------------------------
+pygame.init()
+pygame.font.init()
+# Inicializa o som. Se a maquina nao tiver audio, o jogo continua sem travar.
+try:
+    pygame.mixer.init()
+except Exception:
+    pass
+
+tela = pygame.display.set_mode((LARGURA, ALTURA))
+pygame.display.set_caption('Princess Esc')
+relogio = pygame.time.Clock()
+
+FONTE_GRANDE = pygame.font.SysFont("arial", 56, bold=True)
+FONTE_MEDIA = pygame.font.SysFont("arial", 30, bold=True)
+FONTE_NORMAL = pygame.font.SysFont("arial", 24)
+FONTE_PEQUENA = pygame.font.SysFont("arial", 18)

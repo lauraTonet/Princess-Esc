@@ -67,3 +67,52 @@ FONTE_GRANDE = pygame.font.SysFont("arial", 56, bold=True)
 FONTE_MEDIA = pygame.font.SysFont("arial", 30, bold=True)
 FONTE_NORMAL = pygame.font.SysFont("arial", 24)
 FONTE_PEQUENA = pygame.font.SysFont("arial", 18)
+
+# ----------------------------------------------------------------------
+# CARREGAMENTO DOS ARQUIVOS DA PASTA bases/
+# ----------------------------------------------------------------------
+# Os arquivos abaixo ja existem como exemplos simples. Para personalizar
+# o tema, basta substituir cada arquivo mantendo o MESMO nome:
+#   bases/imagens/fundo.png       -> fundo (ceu)
+#   bases/imagens/personagem.png  -> a princesa
+#   bases/imagens/inimigo.png     -> os obstaculos
+#   bases/imagens/decorativo.png  -> nuvem decorativa
+#   bases/icones/icone.png        -> icone da janela
+#   bases/sons/inicio.wav         -> som de abertura
+#   bases/sons/fim.wav            -> som de fim de jogo
+#
+# Se algum arquivo for apagado ou der erro, o jogo continua funcionando
+# com os desenhos basicos de reserva.
+
+def carregar_imagem(caminho, tamanho=None):
+    try:
+        imagem = pygame.image.load(caminho).convert_alpha()
+        if tamanho is not None:
+            imagem = pygame.transform.smoothscale(imagem, tamanho)
+        return imagem
+    except Exception:
+        return None
+
+def carregar_som(caminho):
+    try:
+        return pygame.mixer.Sound(caminho)
+    except Exception:
+        return None
+
+# Tamanhos da princesa e dos obstaculos (em pixels).
+LARG_PRINCESA, ALT_PRINCESA = 52, 74
+LARG_OBST, ALT_OBST = 48, 64
+
+IMAGEM_FUNDO = carregar_imagem("bases/imagens/fundo.png", (LARGURA, ALTURA))
+IMAGEM_PERSONAGEM = carregar_imagem("bases/imagens/personagem.png", (LARG_PRINCESA, ALT_PRINCESA))
+IMAGEM_INIMIGO = carregar_imagem("bases/imagens/inimigo.png", (LARG_OBST, ALT_OBST))
+IMAGEM_DECORATIVO = carregar_imagem("bases/imagens/decorativo.png", (110, 60))
+SOM_INICIO = carregar_som("bases/sons/inicio.wav")
+SOM_FIM = carregar_som("bases/sons/fim.wav")
+
+try:
+    icone_janela = pygame.image.load("bases/icones/icone.png").convert_alpha()
+    pygame.display.set_icon(icone_janela)
+except Exception:
+    pass
+

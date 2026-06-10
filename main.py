@@ -116,3 +116,74 @@ try:
 except Exception:
     pass
 
+# ----------------------------------------------------------------------
+# FUNCOES DE APOIO
+# ----------------------------------------------------------------------
+def falar(texto):
+    """
+    Fala um texto em voz alta usando pyttsx3 (item 19).
+    Se a biblioteca nao estiver instalada, simplesmente nao faz nada.
+    """
+    if pyttsx3 is None:
+        return
+    try:
+        motor = pyttsx3.init()
+        motor.say(texto)
+        motor.runAndWait()
+    except Exception:
+        pass
+
+def desenhar_texto(texto, fonte, cor, x, y, centro=False):
+    """Desenha um texto na tela. Se centro=True, (x, y) e o centro do texto."""
+    render = fonte.render(texto, True, cor)
+    rect = render.get_rect()
+    if centro:
+        rect.center = (x, y)
+    else:
+        rect.topleft = (x, y)
+    tela.blit(render, rect)
+    return rect
+
+def desenhar_fundo():
+    """
+    Desenha o fundo (ceu) e a faixa de chao por onde a princesa corre.
+    Usa a imagem real de bases/imagens/fundo.png; se faltar, usa cores.
+    """
+    if IMAGEM_FUNDO is not None:
+        tela.blit(IMAGEM_FUNDO, (0, 0))
+    else:
+        tela.fill(CEU)
+        desenhar_texto("AQUI VAI IMAGEM DE FUNDO", FONTE_PEQUENA, CINZA_CLARO,
+                       LARGURA // 2, 60, centro=True)
+    # Faixa de chao (desenhada por cima do fundo para alinhar com o jogo)
+    pygame.draw.rect(tela, CHAO, (0, CHAO_Y, LARGURA, ALTURA - CHAO_Y))
+    pygame.draw.line(tela, CHAO_ESCURO, (0, CHAO_Y), (LARGURA, CHAO_Y), 4)
+
+def desenhar_sol_pulsante(passo):
+    """
+    Item 16: circulo amarelo (sol) em um canto, que pulsa de tamanho.
+    O seno faz o raio aumentar e diminuir suavemente com o tempo.
+    """
+    raio = 42 + int(math.sin(passo * 0.05) * 12)
+    pygame.draw.circle(tela, AMARELO, (905, 90), raio)
+    pygame.draw.circle(tela, (255, 240, 170), (905, 90), max(6, raio // 2))
+
+def novo_obstaculo(x_inicial):
+    """
+    Cria um obstaculo no chao, comecando na posicao x informada.
+    A altura varia um pouco para dar variedade.
+    """
+    altura = random.choice([54, 64, 74])
+    return {"x": x_inicial, "w": LARG_OBST, "h": altura}
+
+def nova_nuvem():
+    """
+    Item 14: objeto decorativo (uma nuvem) que se move sozinho, de forma
+    randomica, e que NAO interage com a jogadora.
+    """
+    return {
+        "x": random.randint(200, LARGURA - 150),
+        "y": random.randint(60, 200),
+        "vx": random.choice([-2, -1, 1, 2]),
+        "vy": random.choice([-1, 1]),
+    }
